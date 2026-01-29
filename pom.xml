@@ -31,6 +31,8 @@
     <maven-checkstyle.version>3.6.0</maven-checkstyle.version>
     <nohttp-checkstyle.version>0.0.11</nohttp-checkstyle.version>
     <spring-format.version>0.0.47</spring-format.version>
+    <sonar.host.url>http://localhost:9000</sonar.host.url>
+    <sonar.token>${env.SONAR_TOKEN}</sonar.token>
   </properties>
 
   <licenses>
@@ -179,7 +181,7 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>            
+      </plugin>
       <plugin>
         <groupId>org.graalvm.buildtools</groupId>
         <artifactId>native-maven-plugin</artifactId>

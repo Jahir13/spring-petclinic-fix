@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import ec.edu.epn.petclinic.model.NamedEntity;
 import ec.edu.epn.petclinic.model.Person;
@@ -41,7 +40,7 @@ public class Vet extends Person {
 	public List<Specialty> getSpecialties() {
 		return getSpecialtiesInternal().stream()
 			.sorted(Comparator.comparing(NamedEntity::getName))
-			.collect(Collectors.toList());
+			.toList();
 	}
 
 	public int getNrOfSpecialties() {

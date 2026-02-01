@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-class VetController {
+public class VetController {
 
 	private static final int DEFAULT_PAGE_SIZE = 5;
 

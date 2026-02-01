@@ -17,7 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-class VisitController {
+public class VisitController {
 
 	private final OwnerRepository owners;
 

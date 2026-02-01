@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 
 @Controller
-class VetController {
+public class VetController {
 
 	private final VetRepository vetRepository;
 

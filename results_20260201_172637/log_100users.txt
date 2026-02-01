@@ -1,0 +1,52 @@
+[2026-02-01 17:34:59,559] ec-2022-116-lp-jrocha/INFO/locust.main: Starting Locust 2.43.2
+[2026-02-01 17:34:59,560] ec-2022-116-lp-jrocha/INFO/locust.main: Run time limit set to 120 seconds
+[2026-02-01 17:34:59,562] ec-2022-116-lp-jrocha/INFO/locust.runners: Ramping to 100 users at a rate of 5.00 per second
+[2026-02-01 17:35:18,668] ec-2022-116-lp-jrocha/INFO/locust.runners: All users spawned: {"PetClinicUser": 100} (100 total users)
+[2026-02-01 17:36:59,125] ec-2022-116-lp-jrocha/INFO/locust.main: --run-time limit reached, shutting down
+[2026-02-01 17:36:59,176] ec-2022-116-lp-jrocha/INFO/locust.main: Shutting down (exit code 1)
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      /                                                                                100   50(50.00%) |     29       2     132     25 |    0.84        0.42
+GET      /owners/new                                                                     2758   127(4.60%) |     17       1     391     10 |   23.06        1.06
+GET      GET /owners/{id}/pets/new                                                       2625    81(3.09%) |     18       1     429     11 |   21.95        0.68
+POST     POST /owners/new                                                                2631     1(0.04%) |      6       1     171      4 |   22.00        0.01
+POST     POST /owners/{id}/pets/new                                                      2543     0(0.00%) |      7       2     164      5 |   21.26        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                     10657   259(2.43%) |     12       1     429      8 |   89.10        2.17
+
+Response time percentiles (approximated)
+Type     Name                                                                                  50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+GET      /                                                                                      25     33     36     39     46    100    120    130    130    130    130    100
+GET      /owners/new                                                                            10     12     14     16     25     41    120    180    340    390    390   2758
+GET      GET /owners/{id}/pets/new                                                              11     14     16     18     26     42    110    190    330    430    430   2625
+POST     POST /owners/new                                                                        4      4      5      6      9     16     57     85    130    170    170   2631
+POST     POST /owners/{id}/pets/new                                                              5      6      7      7     11     19     50     81    150    160    160   2543
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+         Aggregated                                                                              8     10     12     13     21     33     85    130    290    410    430  10657
+
+Error report
+# occurrences      Error                                                                                               
+------------------|---------------------------------------------------------------------------------------------------------------------------------------------
+25                 GET GET /owners/{id}/pets/new: GET pets/new failed: 500                                             
+10                 GET /: HTTPError('500 Server Error:  for url: /')                                                   
+17                 GET /owners/new: GET /owners/new failed: 500                                                        
+110                GET /owners/new: GET /owners/new failed: 0                                                          
+47                 GET GET /owners/{id}/pets/new: GET pets/new failed: 0                                               
+35                 GET /: ConnectionRefusedError(111, 'Connection refused')                                            
+9                  GET GET /owners/{id}/pets/new: GET pets/new failed: 404                                             
+5                  GET /: HTTPError('404 Client Error:  for url: /')                                                   
+1                  POST POST /owners/new: Expected 302, got 0                                                          
+------------------|---------------------------------------------------------------------------------------------------------------------------------------------
+
+
+============================================================
+RESUMEN DE MÉTRICAS
+============================================================
+Total Requests: 10657
+Failed Requests: 259
+Error Rate: 2.43%
+Average Response Time: 12.89ms
+
+⚠️  ALERTA: La tasa de error (2.43%) supera el 2%!
+============================================================

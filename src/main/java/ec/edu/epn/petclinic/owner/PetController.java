@@ -27,6 +27,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 class PetController {
 
 	private static final String VIEWS_PETS_CREATE_OR_UPDATE_FORM = "pets/createOrUpdatePetForm";
+	private static final String FLASH_ATTRIBUTE_MESSAGE = "message";
 
 	private final OwnerRepository owners;
 
@@ -45,8 +46,8 @@ class PetController {
 	@ModelAttribute("owner")
 	public Owner findOwner(@PathVariable("ownerId") int ownerId) {
 		return this.owners.findById(ownerId)
-			.orElseThrow(() -> new IllegalArgumentException(
-				"Owner not found with id: " + ownerId + ". Please ensure the ID is correct "));
+				.orElseThrow(() -> new IllegalArgumentException(
+						"Owner not found with id: " + ownerId + ". Please ensure the ID is correct "));
 	}
 
 	@ModelAttribute("pet")
@@ -58,8 +59,8 @@ class PetController {
 		}
 
 		Owner owner = this.owners.findById(ownerId)
-			.orElseThrow(() -> new IllegalArgumentException(
-				"Owner not found with id: " + ownerId + ". Please ensure the ID is correct "));
+				.orElseThrow(() -> new IllegalArgumentException(
+						"Owner not found with id: " + ownerId + ". Please ensure the ID is correct "));
 		return owner.getPet(petId);
 	}
 
@@ -98,7 +99,7 @@ class PetController {
 
 		owner.addPet(pet);
 		this.owners.save(owner);
-		redirectAttributes.addFlashAttribute("message", "New Pet has been Added");
+		redirectAttributes.addFlashAttribute(FLASH_ATTRIBUTE_MESSAGE, "New Pet has been Added");
 		return "redirect:/owners/{ownerId}";
 	}
 
@@ -131,14 +132,15 @@ class PetController {
 		}
 
 		updatePetDetails(owner, pet);
-		redirectAttributes.addFlashAttribute("message", "Pet details has been edited");
+		redirectAttributes.addFlashAttribute(FLASH_ATTRIBUTE_MESSAGE, "Pet details has been edited");
 		return "redirect:/owners/{ownerId}";
 	}
 
 	/**
 	 * Updates the pet details if it exists or adds a new pet to the owner.
+	 * 
 	 * @param owner The owner of the pet
-	 * @param pet The pet with updated details
+	 * @param pet   The pet with updated details
 	 */
 	private void updatePetDetails(Owner owner, Pet pet) {
 		Integer id = pet.getId();
@@ -149,8 +151,7 @@ class PetController {
 			existingPet.setName(pet.getName());
 			existingPet.setBirthDate(pet.getBirthDate());
 			existingPet.setType(pet.getType());
-		}
-		else {
+		} else {
 			owner.addPet(pet);
 		}
 		this.owners.save(owner);

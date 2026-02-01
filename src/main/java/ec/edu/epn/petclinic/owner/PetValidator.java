@@ -8,7 +8,8 @@ import org.springframework.validation.Validator;
 /**
  * <code>Validator</code> for <code>Pet</code> forms.
  * <p>
- * We're not using Bean Validation annotations here because it is easier to define such
+ * We're not using Bean Validation annotations here because it is easier to
+ * define such
  * validation rule in Java.
  * </p>
  */
@@ -33,6 +34,8 @@ public class PetValidator implements Validator {
 		// birth date validation
 		if (pet.getBirthDate() == null) {
 			errors.rejectValue("birthDate", REQUIRED, REQUIRED);
+		} else if (pet.getBirthDate().isAfter(java.time.LocalDate.now())) {
+			errors.rejectValue("birthDate", "typeMismatch.birthDate", "Birth date cannot be in the future");
 		}
 	}
 

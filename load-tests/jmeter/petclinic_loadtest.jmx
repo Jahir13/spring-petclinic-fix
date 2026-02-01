@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PetClinic Load Test Plan - JMeter
+  ==================================
+
+  Este plan de pruebas incluye:
+  1. Thread Group con ramp-up gradual
+  2. Flujo 1: POST /owners/new con datos aleatorios
+  3. Flujo 2: POST /owners/{id}/pets/new usando el ID extraído
+  4. Extractores de datos (CSS/Regex)
+  5. Listeners para métricas (Latencia, Throughput)
+
+  Ejecutar desde línea de comandos:
+  jmeter -n -t petclinic_loadtest.jmx -l results.jtl -e -o report/
+-->
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="PetClinic Load Test Plan">
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="BASE_URL" elementType="Argument">
+            <stringProp name="Argument.name">BASE_URL</stringProp>
+            <stringProp name="Argument.value">localhost</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="PORT" elementType="Argument">
+            <stringProp name="Argument.name">PORT</stringProp>
+            <stringProp name="Argument.value">8080</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="ERROR_THRESHOLD" elementType="Argument">
+            <stringProp name="Argument.name">ERROR_THRESHOLD</stringProp>
+            <stringProp name="Argument.value">2</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+
+      <!-- ============================================================ -->
+      <!-- THREAD GROUP: Usuarios Concurrentes con Ramp-up Gradual      -->
+      <!-- ============================================================ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="PetClinic Users - Gradual Ramp-up">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <!-- Número de iteraciones por usuario (0 = infinito) -->
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <!-- Número total de usuarios (threads) -->
+        <stringProp name="ThreadGroup.num_threads">100</stringProp>
+        <!-- Ramp-up period: tiempo en segundos para alcanzar todos los usuarios -->
+        <!-- Con 100 usuarios y 60 segundos, se agregan ~1.67 usuarios/segundo -->
+        <stringProp name="ThreadGroup.ramp_time">60</stringProp>
+        <!-- Scheduler para controlar duración total del test -->
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <!-- Duración total del test en segundos (5 minutos) -->
+        <stringProp name="ThreadGroup.duration">300</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+
+        <!-- HTTP Request Defaults -->
+        <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${BASE_URL}</stringProp>
+          <stringProp name="HTTPSampler.port">${PORT}</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+          <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">false</boolProp>
+        </ConfigTestElement>
+        <hashTree/>
+
+        <!-- HTTP Cookie Manager (mantener sesión) -->
+        <CookieManager guiclass="CookiePanel" testclass="CookieManager" testname="HTTP Cookie Manager">
+          <collectionProp name="CookieManager.cookies"/>
+          <boolProp name="CookieManager.clearEachIteration">false</boolProp>
+          <boolProp name="CookieManager.controlledByThreadGroup">false</boolProp>
+        </CookieManager>
+        <hashTree/>
+
+        <!-- ============================================================ -->
+        <!-- GENERADOR DE DATOS ALEATORIOS (Random Variables)            -->
+        <!-- ============================================================ -->
+        <RandomVariableConfig guiclass="TestBeanGUI" testclass="RandomVariableConfig" testname="Random Phone Number">
+          <stringProp name="variableName">PHONE</stringProp>
+          <stringProp name="minimumValue">1000000000</stringProp>
+          <stringProp name="maximumValue">9999999999</stringProp>
+          <stringProp name="outputFormat">0000000000</stringProp>
+          <boolProp name="perThread">true</boolProp>
+        </RandomVariableConfig>
+        <hashTree/>
+
+        <!-- CSV Data Set para nombres aleatorios (opcional) -->
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Generate Random Data">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">
+// Generar datos aleatorios para Owner
+import org.apache.commons.lang3.RandomStringUtils
+
+def firstNames = ['Juan', 'María', 'Carlos', 'Ana', 'Pedro', 'Luis', 'Sofia', 'Diego', 'Camila', 'Andrés']
+def lastNames = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Pérez', 'Sánchez']
+def cities = ['Quito', 'Guayaquil', 'Cuenca', 'Manta', 'Ambato', 'Loja', 'Riobamba', 'Machala']
+def streets = ['Principal', 'Amazonas', 'República', 'Colón', 'Orellana', 'Patria', 'Naciones Unidas']
+def petNames = ['Max', 'Bella', 'Luna', 'Charlie', 'Lucy', 'Cooper', 'Daisy', 'Rocky', 'Buddy', 'Sadie']
+
+def random = new Random()
+
+// Datos del Owner
+vars.put('FIRST_NAME', firstNames[random.nextInt(firstNames.size())])
+vars.put('LAST_NAME', lastNames[random.nextInt(lastNames.size())] + '_' + System.currentTimeMillis() % 10000)
+vars.put('ADDRESS', (random.nextInt(900) + 100) + ' Calle ' + streets[random.nextInt(streets.size())])
+vars.put('CITY', cities[random.nextInt(cities.size())])
+vars.put('TELEPHONE', String.format('%010d', random.nextLong() % 10000000000L).take(10))
+
+// Datos del Pet
+vars.put('PET_NAME', petNames[random.nextInt(petNames.size())] + '_' + (random.nextInt(9000) + 1000))
+vars.put('PET_TYPE', String.valueOf(random.nextInt(6) + 1)) // 1-6: cat, dog, lizard, snake, bird, hamster
+
+// Fecha de nacimiento (últimos 10 años)
+def year = 2015 + random.nextInt(10)
+def month = String.format('%02d', random.nextInt(12) + 1)
+def day = String.format('%02d', random.nextInt(28) + 1)
+vars.put('PET_BIRTH_DATE', "${year}-${month}-${day}")
+          </stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+
+        <!-- ============================================================ -->
+        <!-- FLUJO 1: Crear Owner (POST /owners/new)                     -->
+        <!-- ============================================================ -->
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="TC01 - Create Owner Flow">
+          <boolProp name="TransactionController.includeTimers">false</boolProp>
+          <boolProp name="TransactionController.parent">true</boolProp>
+        </TransactionController>
+        <hashTree>
+
+          <!-- GET /owners/new (cargar formulario) -->
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /owners/new">
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments">
+              <collectionProp name="Arguments.arguments"/>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/owners/new</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <!-- Response Assertion para verificar que el formulario cargó -->
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Verify Form Loaded">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">firstName</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+
+          <!-- POST /owners/new (enviar formulario) -->
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /owners/new">
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="firstName" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.value">${FIRST_NAME}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">firstName</stringProp>
+                </elementProp>
+                <elementProp name="lastName" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.value">${LAST_NAME}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">lastName</stringProp>
+                </elementProp>
+                <elementProp name="address" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.value">${ADDRESS}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">address</stringProp>
+                </elementProp>
+                <elementProp name="city" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.value">${CITY}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">city</stringProp>
+                </elementProp>
+                <elementProp name="telephone" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                  <stringProp name="Argument.value">${TELEPHONE}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                  <stringProp name="Argument.name">telephone</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/owners/new</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+
+            <!-- ========================================================== -->
+            <!-- EXTRACTOR: Obtener el ID del Owner del header Location     -->
+            <!-- ========================================================== -->
+            <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="Extract Owner ID from Redirect">
+              <stringProp name="RegexExtractor.useHeaders">true</stringProp>
+              <stringProp name="RegexExtractor.refname">OWNER_ID</stringProp>
+              <!-- Regex para extraer el ID de /owners/123 -->
+              <stringProp name="RegexExtractor.regex">Location: .*/owners/(\d+)</stringProp>
+              <stringProp name="RegexExtractor.template">$1$</stringProp>
+              <stringProp name="RegexExtractor.default">NOT_FOUND</stringProp>
+              <stringProp name="RegexExtractor.match_number">1</stringProp>
+            </RegexExtractor>
+            <hashTree/>
+
+            <!-- Assertion para verificar redirect 302 -->
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Verify 302 Redirect">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="0">302</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">8</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+
+            <!-- Debug: Verificar que se extrajo el ID -->
+            <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="Verify Owner ID Extracted">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="script">
+def ownerId = vars.get('OWNER_ID')
+if (ownerId == null || ownerId == 'NOT_FOUND' || !ownerId.isNumber()) {
+    AssertionResult.setFailure(true)
+    AssertionResult.setFailureMessage("Failed to extract Owner ID. Got: " + ownerId)
+} else {
+    log.info("Successfully extracted Owner ID: " + ownerId)
+}
+              </stringProp>
+            </JSR223Assertion>
+            <hashTree/>
+          </hashTree>
+
+        </hashTree>
+
+        <!-- Think Time entre flujos -->
+        <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Think Time - Between Flows">
+          <stringProp name="ConstantTimer.delay">1000</stringProp>
+        </ConstantTimer>
+        <hashTree/>
+
+        <!-- ============================================================ -->
+        <!-- FLUJO 2: Crear Pet (POST /owners/{id}/pets/new)             -->
+        <!-- ============================================================ -->
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="TC02 - Create Pet Flow">
+          <boolProp name="TransactionController.includeTimers">false</boolProp>
+          <boolProp name="TransactionController.parent">true</boolProp>
+        </TransactionController>
+        <hashTree>
+
+          <!-- If Controller: Solo ejecutar si se obtuvo el Owner ID -->
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If Owner ID Available">
+            <stringProp name="IfController.condition">${__groovy(vars.get('OWNER_ID') != null &amp;&amp; vars.get('OWNER_ID') != 'NOT_FOUND' &amp;&amp; vars.get('OWNER_ID').isNumber())}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+          </IfController>
+          <hashTree>
+
+            <!-- GET /owners/{id}/pets/new (cargar formulario) -->
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /owners/{id}/pets/new">
+              <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments">
+                <collectionProp name="Arguments.arguments"/>
+              </elementProp>
+              <stringProp name="HTTPSampler.domain"></stringProp>
+              <stringProp name="HTTPSampler.port"></stringProp>
+              <stringProp name="HTTPSampler.protocol"></stringProp>
+              <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+              <stringProp name="HTTPSampler.path">/owners/${OWNER_ID}/pets/new</stringProp>
+              <stringProp name="HTTPSampler.method">GET</stringProp>
+              <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+              <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+              <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+              <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            </HTTPSamplerProxy>
+            <hashTree>
+              <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Verify Pet Form Loaded">
+                <collectionProp name="Asserion.test_strings">
+                  <stringProp name="0">name</stringProp>
+                </collectionProp>
+                <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+                <boolProp name="Assertion.assume_success">false</boolProp>
+                <intProp name="Assertion.test_type">2</intProp>
+              </ResponseAssertion>
+              <hashTree/>
+            </hashTree>
+
+            <!-- POST /owners/{id}/pets/new (enviar formulario) -->
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /owners/{id}/pets/new">
+              <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="name" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                    <stringProp name="Argument.value">${PET_NAME}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">name</stringProp>
+                  </elementProp>
+                  <elementProp name="birthDate" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                    <stringProp name="Argument.value">${PET_BIRTH_DATE}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">birthDate</stringProp>
+                  </elementProp>
+                  <elementProp name="type" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">true</boolProp>
+                    <stringProp name="Argument.value">${PET_TYPE}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                    <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                    <stringProp name="Argument.name">type</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <stringProp name="HTTPSampler.domain"></stringProp>
+              <stringProp name="HTTPSampler.port"></stringProp>
+              <stringProp name="HTTPSampler.protocol"></stringProp>
+              <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+              <stringProp name="HTTPSampler.path">/owners/${OWNER_ID}/pets/new</stringProp>
+              <stringProp name="HTTPSampler.method">POST</stringProp>
+              <boolProp name="HTTPSampler.follow_redirects">false</boolProp>
+              <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+              <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+              <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            </HTTPSamplerProxy>
+            <hashTree>
+              <!-- Assertion para verificar éxito -->
+              <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Verify Pet Created">
+                <collectionProp name="Asserion.test_strings">
+                  <stringProp name="0">302</stringProp>
+                </collectionProp>
+                <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+                <boolProp name="Assertion.assume_success">false</boolProp>
+                <intProp name="Assertion.test_type">8</intProp>
+              </ResponseAssertion>
+              <hashTree/>
+            </hashTree>
+
+          </hashTree>
+
+        </hashTree>
+
+        <!-- ============================================================ -->
+        <!-- LISTENERS: Métricas de Rendimiento                          -->
+        <!-- ============================================================ -->
+
+        <!-- View Results Tree (para debug - desactivar en producción) -->
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="false">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+
+        <!-- Summary Report: Latencia y Throughput -->
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+
+        <!-- Aggregate Report: Estadísticas detalladas -->
+        <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+
+        <!-- Response Time Graph -->
+        <ResultCollector guiclass="RespTimeGraphVisualizer" testclass="ResultCollector" testname="Response Time Graph">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+
+      </hashTree>
+
+      <!-- ============================================================ -->
+      <!-- TEARDOWN: Verificar tasa de error al final del test         -->
+      <!-- ============================================================ -->
+      <PostThreadGroup guiclass="PostThreadGroupGui" testclass="PostThreadGroup" testname="tearDown - Check Error Rate">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+      </PostThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Calculate Final Error Rate">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">
+// Calcular tasa de error final
+def errorThreshold = Double.parseDouble(vars.get('ERROR_THRESHOLD') ?: '2')
+
+// Nota: En modo headless, las métricas finales se calculan al generar el reporte HTML
+log.info("===============================================")
+log.info("TEST COMPLETED")
+log.info("Check the HTML report for detailed metrics")
+log.info("Error Threshold: " + errorThreshold + "%")
+log.info("===============================================")
+
+SampleResult.setSuccessful(true)
+SampleResult.setResponseData("Test completed. Check HTML report for error rate analysis.", "UTF-8")
+          </stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

@@ -29,6 +29,8 @@ class OwnerController {
 
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
 	private static final String FLASH_ATTRIBUTE_ERROR = "error";
+	private static final String FLASH_ATTRIBUTE_MESSAGE = "message";
+	private static final int DEFAULT_PAGE_SIZE = 5;
 
 	private final OwnerRepository owners;
 
@@ -45,8 +47,8 @@ class OwnerController {
 	public Owner findOwner(@PathVariable(name = "ownerId", required = false) Integer ownerId) {
 		return ownerId == null ? new Owner()
 				: this.owners.findById(ownerId)
-					.orElseThrow(() -> new IllegalArgumentException("Owner not found with id: " + ownerId
-							+ ". Please ensure the ID is correct " + "and the owner exists in the database."));
+						.orElseThrow(() -> new IllegalArgumentException("Owner not found with id: " + ownerId
+								+ ". Please ensure the ID is correct " + "and the owner exists in the database."));
 	}
 
 	@GetMapping("/owners/new")
@@ -62,7 +64,7 @@ class OwnerController {
 		}
 
 		this.owners.save(owner);
-		redirectAttributes.addFlashAttribute("message", "New Owner Created");
+		redirectAttributes.addFlashAttribute(FLASH_ATTRIBUTE_MESSAGE, "New Owner Created");
 		return "redirect:/owners/" + owner.getId();
 	}
 
@@ -108,7 +110,7 @@ class OwnerController {
 	}
 
 	private Page<Owner> findPaginatedForOwnersLastName(int page, String lastname) {
-		int pageSize = 5;
+		int pageSize = DEFAULT_PAGE_SIZE;
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
 		return owners.findByLastNameStartingWith(lastname, pageable);
 	}
@@ -134,12 +136,13 @@ class OwnerController {
 
 		owner.setId(ownerId);
 		this.owners.save(owner);
-		redirectAttributes.addFlashAttribute("message", "Owner Values Updated");
+		redirectAttributes.addFlashAttribute(FLASH_ATTRIBUTE_MESSAGE, "Owner Values Updated");
 		return "redirect:/owners/{ownerId}";
 	}
 
 	/**
 	 * Custom handler for displaying an owner.
+	 * 
 	 * @param ownerId the ID of the owner to display
 	 * @return a ModelMap with the model attributes for the view
 	 */

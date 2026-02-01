@@ -1,6 +1,5 @@
-package ec.edu.epn.petclinic.owner.model;
+package ec.edu.epn.petclinic.vet;
 
-import ec.edu.epn.petclinic.vet.Vet;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

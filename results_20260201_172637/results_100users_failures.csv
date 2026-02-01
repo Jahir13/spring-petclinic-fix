@@ -1,0 +1,10 @@
+Method,Name,Error,Occurrences
+GET,/,"ConnectionRefusedError(111, 'Connection refused')",35
+GET,GET /owners/{id}/pets/new,CatchResponseError('GET pets/new failed: 0'),47
+POST,POST /owners/new,"CatchResponseError('Expected 302, got 0')",1
+GET,GET /owners/{id}/pets/new,CatchResponseError('GET pets/new failed: 500'),25
+GET,/,HTTPError('404 Client Error:  for url: /'),5
+GET,/owners/new,CatchResponseError('GET /owners/new failed: 0'),110
+GET,/owners/new,CatchResponseError('GET /owners/new failed: 500'),17
+GET,/,HTTPError('500 Server Error:  for url: /'),10
+GET,GET /owners/{id}/pets/new,CatchResponseError('GET pets/new failed: 404'),9

@@ -1,0 +1,6 @@
+Method,Name,Error,Occurrences
+GET,GET /owners/{id}/pets/new,CatchResponseError('GET pets/new failed: 0'),552
+POST,POST /owners/new,"CatchResponseError('Expected 302, got 0')",22
+GET,GET /owners/{id}/pets/new,CatchResponseError('GET pets/new failed: 500'),467
+POST,POST /owners/{id}/pets/new,"CatchResponseError('Expected 302 or 200, got 0')",32
+GET,/owners/new,CatchResponseError('GET /owners/new failed: 0'),798

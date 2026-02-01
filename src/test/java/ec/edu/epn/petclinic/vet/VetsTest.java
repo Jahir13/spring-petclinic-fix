@@ -1,4 +1,4 @@
-package ec.edu.epn.petclinic.owner;
+package ec.edu.epn.petclinic.vet;
 
 import org.junit.jupiter.api.Test;
 import java.util.List;

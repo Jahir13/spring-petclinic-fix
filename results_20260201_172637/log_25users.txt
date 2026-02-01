@@ -1,0 +1,38 @@
+[2026-02-01 17:28:42,771] ec-2022-116-lp-jrocha/INFO/locust.main: Starting Locust 2.43.2
+[2026-02-01 17:28:42,772] ec-2022-116-lp-jrocha/INFO/locust.main: Run time limit set to 120 seconds
+[2026-02-01 17:28:42,772] ec-2022-116-lp-jrocha/INFO/locust.runners: Ramping to 25 users at a rate of 5.00 per second
+[2026-02-01 17:28:46,777] ec-2022-116-lp-jrocha/INFO/locust.runners: All users spawned: {"PetClinicUser": 25} (25 total users)
+[2026-02-01 17:30:42,656] ec-2022-116-lp-jrocha/INFO/locust.main: --run-time limit reached, shutting down
+[2026-02-01 17:30:42,672] ec-2022-116-lp-jrocha/INFO/locust.main: Shutting down (exit code 0)
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      /                                                                                 25     0(0.00%) |      7       5      15      8 |    0.21        0.00
+GET      /owners/new                                                                      739     0(0.00%) |      6       4      28      6 |    6.17        0.00
+GET      GET /owners/{id}/pets/new                                                        732     0(0.00%) |      7       5      32      7 |    6.11        0.00
+POST     POST /owners/new                                                                 739     0(0.00%) |      2       1       9      2 |    6.17        0.00
+POST     POST /owners/{id}/pets/new                                                       732     0(0.00%) |      3       2      13      3 |    6.11        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                      2967     0(0.00%) |      4       1      32      5 |   24.76        0.00
+
+Response time percentiles (approximated)
+Type     Name                                                                                  50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+GET      /                                                                                       8      8      8      9      9     10     16     16     16     16     16     25
+GET      /owners/new                                                                             6      6      6      6      7      9     11     20     28     28     28    739
+GET      GET /owners/{id}/pets/new                                                               7      7      7      7      8     10     13     17     32     32     32    732
+POST     POST /owners/new                                                                        2      2      2      2      3      4      6      7     10     10     10    739
+POST     POST /owners/{id}/pets/new                                                              3      3      3      3      4      4      5      6     14     14     14    732
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+         Aggregated                                                                              5      6      6      6      7      8     10     13     28     32     32   2967
+
+
+============================================================
+RESUMEN DE MÉTRICAS
+============================================================
+Total Requests: 2967
+Failed Requests: 0
+Error Rate: 0.00%
+Average Response Time: 4.64ms
+
+✅ La tasa de error está dentro del límite aceptable.
+============================================================
